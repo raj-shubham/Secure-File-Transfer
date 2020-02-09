@@ -19,6 +19,47 @@
 
 #define BACKLOG 10	 // how many pending connections queue will hold
 
+struct Hdr{
+	int opcode;
+	//string saddr;
+	//string daddr;
+};
+
+struct PubKey{
+	long q;
+	long a;
+	long Y;
+};
+
+struct ReqServ{
+	int opcode;
+};
+
+struct ReqCom{
+	int opcode;
+};
+
+struct EncMsg{
+	int message;
+};
+
+struct Disconnect{
+	int opcode;
+};
+
+union commands{
+	PubKey pubkey;
+	ReqServ reqserv;
+	ReqCom reqcom;
+	EncMsg encmsg;
+	Disconnect disconnect;
+};
+
+struct Msg{
+	Hdr hdr; /* Header for a message */
+	commands cmd;
+};
+
 void sigchld_handler(int s)
 {
 	(void)s; // quiet unused variable warning
@@ -123,13 +164,11 @@ int main(void)
 
 		if (!fork()) { // this is the child process
 			close(sockfd); // child doesn't need the listener
-			struct Person
-			{
-			    char name[3];
-			    int age;
-			};
-			struct Person x = {"Jo",35};
-			unsigned char buffer[sizeof(Person)];
+			Msg x;
+			x.hdr.opcode = 10;
+            x.cmd.encmsg.message=2;
+
+			unsigned char buffer[sizeof(Msg)];
 			memcpy(&buffer, &x, sizeof(x));
 			if (send(new_fd, &buffer, sizeof(buffer), 0) == -1)
 				perror("send");

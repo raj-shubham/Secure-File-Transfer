@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
+#include <stdio.h> 
 #include <netdb.h>
 #include <sys/types.h>
 #include <netinet/in.h>
@@ -18,6 +19,47 @@
 
 #define MAXDATASIZE 100 // max number of bytes we can get at once 
 
+struct Hdr{
+	int opcode;
+	//string saddr;
+	//string daddr;
+};
+
+struct PubKey{
+	long q;
+	long a;
+	long Y;
+};
+
+struct ReqServ{
+	int opcode;
+};
+
+struct ReqCom{
+	int opcode;
+};
+
+struct EncMsg{
+	int message;
+};
+
+struct Disconnect{
+	int opcode;
+};
+
+union commands{
+	PubKey pubkey;
+	ReqServ reqserv;
+	ReqCom reqcom;
+	EncMsg encmsg;
+	Disconnect disconnect;
+};
+
+struct Msg{
+	Hdr hdr; /* Header for a message */
+	commands cmd;
+};
+
 // get sockaddr, IPv4 or IPv6:
 void *get_in_addr(struct sockaddr *sa)
 {
@@ -27,6 +69,8 @@ void *get_in_addr(struct sockaddr *sa)
 
 	return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
+
+
 
 int main(int argc, char *argv[])
 {
@@ -84,16 +128,11 @@ int main(int argc, char *argv[])
 	}
 
 	buf[numbytes] = '\0';
-	struct Person
-	{
-	    char name[3];
-	    int age;
-	};
-	struct Person *msg;
-	struct Person theMsg;
-	msg = (struct Person *)&buf;
-	theMsg = *msg;
-	printf("client: received '%d'\n",theMsg.age);
+	Msg *incomingPtr;
+	Msg incomingStr;
+	incomingPtr = (struct Msg *)&buf;
+	incomingStr = *incomingPtr;
+	printf("client: received '%d'\n",incomingStr.cmd.encmsg.message);
 
 	close(sockfd);
 
